@@ -1,0 +1,3 @@
+python train_model.py
+python app.py
+python sensor_simulator.py
