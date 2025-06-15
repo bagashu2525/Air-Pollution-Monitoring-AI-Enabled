@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Pollution Monitoring Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #283593;
+            --accent-color: #3949ab;
+            --success-color: #43a047;
+            --warning-color: #ffa000;
+            --danger-color: #e53935;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #546e7a;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header h1 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            background: var(--card-background);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parameter-card {
+            background: var(--card-background);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .parameter-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .parameter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .parameter-unit {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .risk-level {
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .risk-normal { 
+            background-color: var(--success-color); 
+            color: white; 
+        }
+        .risk-attention { 
+            background-color: var(--warning-color); 
+            color: white; 
+        }
+        .risk-warning { 
+            background-color: #f57c00; 
+            color: white; 
+        }
+        .risk-danger { 
+            background-color: var(--danger-color); 
+            color: white; 
+        }
+        .risk-immediate { 
+            background-color: #b71c1c; 
+            color: white; 
+        }
+
+        .alert-item {
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            border-radius: 12px;
+            background-color: var(--card-background);
+            border-left: 4px solid var(--danger-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .alert-item:hover {
+            transform: translateX(5px);
+        }
+
+        .action-item {
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            background-color: var(--card-background);
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .action-item:hover {
+            transform: translateX(5px);
+        }
+
+        #lastUpdate {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .status-inactive {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 8px var(--danger-color);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .trend-indicator {
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        .trend-up {
+            color: var(--danger-color);
+        }
+
+        .trend-down {
+            color: var(--success-color);
+        }
+
+        .trend-stable {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="container">
+            <h1><i class="fas fa-wind"></i> Air Pollution Monitoring Dashboard</h1>
+            <p class="mb-0">Real-time environmental monitoring and analysis system</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Risk Level Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-shield-alt"></i>
+                            Current Risk Level
+                        </h5>
+                        <div id="riskLevel" class="risk-level mt-3 mb-3">Loading...</div>
+                        <div class="mt-3">
+                            <span class="status-indicator status-active"></span>
+                            <span>System Active</span>
+                        </div>
+                        <p id="lastUpdate" class="mb-0">Last updated: Never</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Active Alerts
+                        </h5>
+                        <div id="alertsList" class="mt-3">
+                            <p class="text-muted">No active alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Pollutants -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-smog"></i>
+                            Pollutants
+                        </h5>
+                        <div id="pollutantsList" class="row mt-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explosion Parameters -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-fire"></i>
+                            Explosion Parameters
+                        </h5>
+                        <div id="explosionParamsList" class="row mt-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-tasks"></i>
+                            Recommended Actions
+                        </h5>
+                        <div id="actionsList" class="mt-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDashboard() {
+            fetch('http://localhost:5000/api/sensor-data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update risk level
+                    const riskLevel = document.getElementById('riskLevel');
+                    riskLevel.textContent = data.risk_status;
+                    riskLevel.className = `risk-level risk-${data.risk_status.toLowerCase()}`;
+
+                    // Update last update time
+                    document.getElementById('lastUpdate').textContent = 
+                        `Last updated: ${new Date(data.timestamp).toLocaleString()}`;
+
+                    // Update pollutants
+                    const pollutantsList = document.getElementById('pollutantsList');
+                    pollutantsList.innerHTML = '';
+                    for (const [key, value] of Object.entries(data.pollutants)) {
+                        const trend = getTrend(value);
+                        pollutantsList.innerHTML += `
+                            <div class="col-md-6 mb-3">
+                                <div class="parameter-card">
+                                    <h6>${key}</h6>
+                                    <div class="parameter-value">
+                                        ${value.toFixed(3)}
+                                        <span class="trend-indicator ${trend.class}">
+                                            <i class="fas ${trend.icon}"></i>
+                                        </span>
+                                    </div>
+                                    <div class="parameter-unit">mg/m³</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Update explosion parameters
+                    const explosionParamsList = document.getElementById('explosionParamsList');
+                    explosionParamsList.innerHTML = '';
+                    for (const [key, value] of Object.entries(data.explosion_parameters)) {
+                        const trend = getTrend(value);
+                        explosionParamsList.innerHTML += `
+                            <div class="col-md-6 mb-3">
+                                <div class="parameter-card">
+                                    <h6>${key}</h6>
+                                    <div class="parameter-value">
+                                        ${value.toFixed(2)}
+                                        <span class="trend-indicator ${trend.class}">
+                                            <i class="fas ${trend.icon}"></i>
+                                        </span>
+                                    </div>
+                                    <div class="parameter-unit">${getUnit(key)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Update alerts
+                    const alertsList = document.getElementById('alertsList');
+                    if (data.alerts && data.alerts.length > 0) {
+                        alertsList.innerHTML = data.alerts.map(alert => `
+                            <div class="alert-item">
+                                <strong>${alert.parameter}</strong>: ${alert.value.toFixed(3)} 
+                                (Threshold: ${alert.threshold})
+                                <div class="text-muted mt-1">
+                                    <small>${new Date(alert.timestamp).toLocaleString()}</small>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        alertsList.innerHTML = '<p class="text-muted">No active alerts</p>';
+                    }
+
+                    // Update recommended actions
+                    const actionsList = document.getElementById('actionsList');
+                    actionsList.innerHTML = data.recommended_actions.map(action => `
+                        <div class="action-item">
+                            <i class="fas fa-arrow-right me-2"></i>${action}
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        }
+
+        function getUnit(parameter) {
+            const units = {
+                'Methane': 'ppm',
+                'Hydrogen': 'ppm',
+                'Temperature': '°C',
+                'Pressure': 'bar',
+                'Oxygen_Level': '%',
+                'VOC': 'ppm'
+            };
+            return units[parameter] || '';
+        }
+
+        function getTrend(value) {
+            // This is a placeholder for trend analysis
+            // In a real application, you would compare with previous values
+            const random = Math.random();
+            if (random < 0.33) {
+                return { icon: 'fa-arrow-up', class: 'trend-up' };
+            } else if (random < 0.66) {
+                return { icon: 'fa-arrow-down', class: 'trend-down' };
+            } else {
+                return { icon: 'fa-minus', class: 'trend-stable' };
+            }
+        }
+
+        // Update dashboard every 5 seconds
+        updateDashboard();
+        setInterval(updateDashboard, 5000);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
