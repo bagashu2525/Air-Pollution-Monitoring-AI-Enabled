@@ -1,120 +1,105 @@
-import requests
-import time
 import random
+import time
+import requests
+import json
 from datetime import datetime
-import numpy as np
 
-# API endpoint
-API_URL = "http://localhost:5000/api/sensor-data"
+# Flask server URL
+FLASK_SERVER = "http://localhost:5000"
+
+# Base values and variation ranges for each parameter
+SENSOR_RANGES = {
+    "pollutants": {
+        "Suspended Particles": {"base": 0.15, "variation": 0.05},  # mg/m³
+        "Sulfur Dioxide": {"base": 0.05, "variation": 0.02},      # mg/m³
+        "Carbon Monoxide": {"base": 3.0, "variation": 0.5},       # mg/m³
+        "Nitrogen Dioxide": {"base": 0.085, "variation": 0.02},   # mg/m³
+        "Sulfates": {"base": 0.025, "variation": 0.01}            # mg/m³
+    },
+    "explosion_parameters": {
+        "Methane": {"base": 4500, "variation": 500},     # ppm
+        "Hydrogen": {"base": 3500, "variation": 400},    # ppm
+        "Temperature": {"base": 25, "variation": 5},     # °C
+        "Pressure": {"base": 1.5, "variation": 0.2},     # bar
+        "Oxygen_Level": {"base": 21.0, "variation": 0.5}, # %
+        "VOC": {"base": 100, "variation": 20}            # ppm
+    }
+}
+
+def generate_varying_value(base, variation):
+    """Generate a value that varies around a base value"""
+    return round(base + random.uniform(-variation, variation), 3)
 
 def generate_sensor_data():
-    """Generate simulated sensor data"""
-    # Use only cities that were in the training data
-    cities = ['New York']  # For now, we'll use just one city to avoid encoding issues
-    
-    # Generate regular pollutant data
-    pollutants = {
-        'Suspended Particles': round(random.uniform(0.05, 0.25), 4),
-        'Sulfur Dioxide': round(random.uniform(0.02, 0.08), 4),
-        'Carbon Monoxide': round(random.uniform(1.0, 4.0), 4),
-        'Nitrogen Dioxide': round(random.uniform(0.04, 0.12), 4),
-        'Sulfates': round(random.uniform(0.01, 0.04), 4)
+    """Generate simulated sensor data with realistic variations"""
+    data = {
+        "timestamp": datetime.now().isoformat(),
+        "pollutants": {},
+        "explosion_parameters": {},
+        "city": random.choice(["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"])
     }
     
-    # Generate explosion-related parameters with occasional dangerous values
-    explosion_parameters = {
-        'Methane': round(random.uniform(2000, 6000), 2),
-        'Hydrogen': round(random.uniform(2000, 5000), 2),
-        'Temperature': round(random.uniform(20, 70), 2),
-        'Pressure': round(random.uniform(1.0, 2.5), 2),
-        'Oxygen_Level': round(random.uniform(19.5, 25.0), 2),
-        'VOC': round(random.uniform(50, 150), 2)
-    }
+    # Generate pollutant values
+    for pollutant, range_info in SENSOR_RANGES["pollutants"].items():
+        data["pollutants"][pollutant] = generate_varying_value(
+            range_info["base"], 
+            range_info["variation"]
+        )
     
-    # Occasionally generate dangerous conditions (10% chance)
+    # Generate explosion parameter values
+    for param, range_info in SENSOR_RANGES["explosion_parameters"].items():
+        data["explosion_parameters"][param] = generate_varying_value(
+            range_info["base"], 
+            range_info["variation"]
+        )
+    
+    # Occasionally generate a spike in values (10% chance)
     if random.random() < 0.1:
-        # Simulate a potentially dangerous situation
-        danger_type = random.choice(['gas', 'temperature', 'pressure'])
-        if danger_type == 'gas':
-            explosion_parameters['Methane'] = round(random.uniform(5500, 7000), 2)  # High methane
-            explosion_parameters['Oxygen_Level'] = round(random.uniform(20.5, 23.0), 2)  # Sufficient oxygen
-        elif danger_type == 'temperature':
-            explosion_parameters['Temperature'] = round(random.uniform(75, 90), 2)  # High temperature
-        else:
-            explosion_parameters['Pressure'] = round(random.uniform(2.8, 3.5), 2)  # High pressure
+        spike_param = random.choice(list(data["pollutants"].keys()))
+        data["pollutants"][spike_param] *= 2  # Double the value
     
-    return {
-        'city': random.choice(cities),
-        'pollutants': pollutants,
-        'explosion_parameters': explosion_parameters,
-        'timestamp': datetime.now().isoformat()
-    }
+    return data
 
-def simulate_sensor():
-    """Simulate sensor readings and send to API"""
-    print("Starting sensor simulation...")
-    print("Press Ctrl+C to stop the simulation.")
-    print("\nMonitoring both pollution and explosion risks...")
+def send_data_to_server(data):
+    """Send data to Flask server"""
+    try:
+        response = requests.post(
+            f"{FLASK_SERVER}/api/sensor-data",
+            json=data,
+            headers={"Content-Type": "application/json"}
+        )
+        if response.status_code == 200:
+            print("Data sent successfully!")
+            print("Server response:", response.json())
+        else:
+            print(f"Error sending data. Status code: {response.status_code}")
+            print("Response:", response.text)
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to server: {e}")
+
+def main():
+    print("Starting sensor data simulation...")
+    print(f"Sending data to: {FLASK_SERVER}")
     
-    while True:
-        try:
-            # Generate sensor data
-            data = generate_sensor_data()
+    try:
+        while True:
+            # Generate new sensor data
+            sensor_data = generate_sensor_data()
             
-            # Send data to API
-            response = requests.post(API_URL, json=data)
+            # Print the data being sent
+            print("\nGenerated Sensor Data:")
+            print(json.dumps(sensor_data, indent=2))
             
-            # Print response
-            if response.status_code == 200:
-                result = response.json()
-                print(f"\nTimestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                
-                print("\nPollutant Levels:")
-                for pollutant, value in data['pollutants'].items():
-                    print(f"- {pollutant}: {value:.4f} mg/m³")
-                
-                print("\nExplosion Parameters:")
-                for param, value in data['explosion_parameters'].items():
-                    unit = {
-                        'Methane': 'ppm',
-                        'Hydrogen': 'ppm',
-                        'Temperature': '°C',
-                        'Pressure': 'bar',
-                        'Oxygen_Level': '%',
-                        'VOC': 'ppm'
-                    }.get(param, '')
-                    print(f"- {param}: {value:.2f} {unit}")
-                
-                print("\nRisk Assessment:")
-                print(f"Risk Level: {result['risk_status']}")
-                print(f"Pollution Risk: {result['predictions']['pollution_risk']:.4f}")
-                print(f"Explosion Risk: {result['predictions']['explosion_risk']:.4f}")
-                print(f"Gas Leak Risk: {result['predictions']['gas_leak_risk']:.4f}")
-                
-                if result['alerts']:
-                    print("\n⚠️ Parameter Alerts:")
-                    for alert in result['alerts']:
-                        print(f"- {alert['parameter']}: {alert['value']:.4f} (Threshold: {alert['threshold']})")
-                
-                if result['explosion_risks']:
-                    print("\n🔥 Explosion Risks:")
-                    for risk in result['explosion_risks']:
-                        print(f"- {risk['type']}: {risk['severity']} - {risk['description']}")
-                
-                if result['recommended_actions']:
-                    print("\n📋 Recommended Actions:")
-                    for action in result['recommended_actions']:
-                        print(f"- {action}")
-                
-                print("\n" + "="*50)
-            else:
-                print(f"Error: {response.status_code}")
-                
-        except Exception as e:
-            print(f"Error: {str(e)}")
-        
-        # Wait for 5 seconds before next reading
-        time.sleep(5)
+            # Send data to server
+            send_data_to_server(sensor_data)
+            
+            # Wait for 2 seconds before next reading
+            time.sleep(2)
+            
+    except KeyboardInterrupt:
+        print("\nSimulation stopped by user")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    simulate_sensor() 
+    main() 
