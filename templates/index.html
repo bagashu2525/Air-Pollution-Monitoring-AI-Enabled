@@ -294,30 +294,85 @@
             </div>
         </div>
 
-        <!-- Model Predictions -->
+        <!-- Risk Level Calculation -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <i class="fas fa-robot"></i>
-                            Model Predictions
+                            <i class="fas fa-calculator"></i>
+                            Risk Level Calculation
                         </h5>
-                        <div id="predictionsList" class="mt-3"></div>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Predictions Analysis</h6>
+                                        <div id="predictionsAnalysis" class="mt-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Explosion Risk:</span>
+                                                <span id="explosionRiskStatus" class="badge">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Gas Leak Risk:</span>
+                                                <span id="gasLeakRiskStatus" class="badge">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Gas Leak Analysis</h6>
+                                        <div id="gasLeakAnalysis" class="mt-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Methane Level:</span>
+                                                <span id="methaneLevel" class="badge">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Hydrogen Level:</span>
+                                                <span id="hydrogenLevel" class="badge">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>VOC Level:</span>
+                                                <span id="vocLevel" class="badge">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Alerts Analysis</h6>
+                                        <div id="alertsAnalysis" class="mt-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Active Alerts:</span>
+                                                <span id="activeAlertsCount" class="badge">-</span>
+                                            </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Explosion Risks -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
+                            <div class="col-md-2">
+                                <div class="card bg-light">
                     <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-bomb"></i>
-                            Explosion Risks
-                        </h5>
-                        <div id="explosionRisksList" class="mt-3"></div>
+                                        <h6 class="card-subtitle mb-2 text-muted">Explosion Risks</h6>
+                                        <div id="explosionRisksAnalysis" class="mt-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>Critical Risks:</span>
+                                                <span id="criticalRisksCount" class="badge">-</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>High Risks:</span>
+                                                <span id="highRisksCount" class="badge">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -327,20 +382,65 @@
     <script>
         // --- Prediction thresholds and status function ---
         const predictionThresholds = {
-            'CO': { safe: 2, caution: 5 }, // example thresholds
-            'NO2': { safe: 0.05, caution: 0.1 },
-            'SO2': { safe: 0.02, caution: 0.05 },
-            'PM2.5': { safe: 12, caution: 35 },
-            'PM10': { safe: 20, caution: 50 },
-            // Add more as needed
+            // Pollution thresholds
+            'Suspended Particles': { safe: 0.15, caution: 0.3 },
+            'Sulfur Dioxide': { safe: 0.05, caution: 0.1 },
+            'Carbon Monoxide': { safe: 3.0, caution: 6.0 },
+            'Nitrogen Dioxide': { safe: 0.085, caution: 0.17 },
+            'Sulfates': { safe: 0.025, caution: 0.05 },
+            
+            // Explosion risk thresholds
+            'Methane': { safe: 5000, caution: 7500 },
+            'Hydrogen': { safe: 4000, caution: 6000 },
+            'Temperature': { safe: 60, caution: 75 },
+            'Pressure': { safe: 2.0, caution: 2.5 },
+            'Oxygen_Level': { safe: 23.5, caution: 24.5 },
+            'VOC': { safe: 100, caution: 150 }
         };
 
         function getPredictionStatus(key, value) {
             const t = predictionThresholds[key];
             if (!t) return { status: 'Unknown', badge: 'bg-secondary', explanation: 'No threshold set' };
-            if (value <= t.safe) return { status: 'Safe', badge: 'bg-success', explanation: 'Within safe limits' };
-            if (value <= t.caution) return { status: 'Caution', badge: 'bg-warning', explanation: 'Approaching caution level' };
-            return { status: 'Danger', badge: 'bg-danger', explanation: 'Exceeds safe limits!' };
+            
+            let status, badge, explanation;
+            
+            if (value <= t.safe) {
+                status = 'Safe';
+                badge = 'bg-success';
+                explanation = 'Within safe limits';
+            } else if (value <= t.caution) {
+                status = 'Caution';
+                badge = 'bg-warning';
+                explanation = 'Approaching caution level';
+            } else {
+                status = 'Danger';
+                badge = 'bg-danger';
+                explanation = 'Exceeds safe limits!';
+            }
+            
+            return { status, badge, explanation };
+        }
+
+        function getRiskLevelColor(riskLevel) {
+            const colors = {
+                'NORMAL': 'success',
+                'ATTENTION': 'warning',
+                'WARNING': 'warning',
+                'DANGER': 'danger',
+                'IMMEDIATE_EVAC': 'danger'
+            };
+            return colors[riskLevel] || 'secondary';
+        }
+
+        function getRiskLevelIcon(riskLevel) {
+            const icons = {
+                'NORMAL': 'fa-check-circle',
+                'ATTENTION': 'fa-exclamation-circle',
+                'WARNING': 'fa-exclamation-triangle',
+                'DANGER': 'fa-radiation',
+                'IMMEDIATE_EVAC': 'fa-skull-crossbones'
+            };
+            return icons[riskLevel] || 'fa-question-circle';
         }
 
         let alarmPlaying = false;
@@ -351,8 +451,17 @@
                 .then(data => {
                     // Update risk level
                     const riskLevel = document.getElementById('riskLevel');
-                    riskLevel.textContent = data.risk_status;
-                    riskLevel.className = `risk-level risk-${data.risk_status.toLowerCase()}`;
+                    const riskColor = getRiskLevelColor(data.risk_status);
+                    const riskIcon = getRiskLevelIcon(data.risk_status);
+                    riskLevel.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas ${riskIcon} fa-2x me-2 text-${riskColor}"></i>
+                            <span class="fs-4 fw-bold text-${riskColor}">${data.risk_status}</span>
+                        </div>
+                        <div class="mt-2 text-muted">
+                            Risk Level: ${data.risk_level}
+                        </div>
+                    `;
     
                     // Update last update time
                     document.getElementById('lastUpdate').textContent =
@@ -424,56 +533,64 @@
                         </div>
                     `).join('');
     
-                    // Update predictions
-                    const predictionsList = document.getElementById('predictionsList');
-                    let dangerDetected = false;
+                    // Update risk level calculation breakdown
+                    // Predictions Analysis
+                    const explosionRiskStatus = document.getElementById('explosionRiskStatus');
+                    const gasLeakRiskStatus = document.getElementById('gasLeakRiskStatus');
+                    
                     if (data.predictions) {
-                        predictionsList.innerHTML = Object.entries(data.predictions).map(
-                            ([key, value]) => {
-                                const status = getPredictionStatus(key, value);
-                                if (status.status === 'Danger') dangerDetected = true;
-                                return `
-                                    <div class="card mb-2">
-                                        <div class="card-body d-flex align-items-center justify-content-between">
-                                            <div>
-                                                <strong>${key}</strong>: <span class="fs-5">${value.toFixed(3)}</span>
-                                            </div>
-                                            <span class="badge ${status.badge} p-2">${status.status}</span>
-                                        </div>
-                                        <div class="card-footer text-muted small">${status.explanation}</div>
-                                    </div>
-                                `;
-                            }
-                        ).join('');
-                    } else {
-                        predictionsList.innerHTML = '<p class="text-muted">No predictions available</p>';
-                    }
-    
-                    // Update explosion risks
-                    const explosionRisksList = document.getElementById('explosionRisksList');
-                    if (data.explosion_risks && data.explosion_risks.length > 0) {
-                        explosionRisksList.innerHTML = data.explosion_risks.map(
-                            risk => `<div class="alert-item"><strong>${risk.type}</strong> [${risk.severity}]: ${risk.description}</div>`
-                        ).join('');
-                    } else {
-                        explosionRisksList.innerHTML = '<p class="text-muted">No explosion risks detected</p>';
+                        const explosionRisk = data.predictions.explosion_risk;
+                        const gasLeakRisk = data.predictions.gas_leak_risk;
+                        
+                        explosionRiskStatus.textContent = explosionRisk.toFixed(2);
+                        explosionRiskStatus.className = `badge ${explosionRisk > 0.7 ? 'bg-danger' : explosionRisk > 0.4 ? 'bg-warning' : 'bg-success'}`;
+                        
+                        gasLeakRiskStatus.textContent = gasLeakRisk.toFixed(2);
+                        gasLeakRiskStatus.className = `badge ${gasLeakRisk > 0.7 ? 'bg-danger' : gasLeakRisk > 0.4 ? 'bg-warning' : 'bg-success'}`;
                     }
 
-                    // Danger alert and alarm logic
-                    const dangerAlert = document.getElementById('dangerAlert');
-                    const dangerAlarm = document.getElementById('dangerAlarm');
-                    if (dangerDetected) {
-                        dangerAlert.classList.remove('d-none');
-                        if (!alarmPlaying) {
-                            dangerAlarm.currentTime = 0;
-                            dangerAlarm.play();
-                            alarmPlaying = true;
-                        }
-                    } else {
-                        dangerAlert.classList.add('d-none');
-                        dangerAlarm.pause();
-                        dangerAlarm.currentTime = 0;
-                        alarmPlaying = false;
+                    // Gas Leak Analysis
+                    if (data.explosion_parameters) {
+                        const methaneLevel = document.getElementById('methaneLevel');
+                        const hydrogenLevel = document.getElementById('hydrogenLevel');
+                        const vocLevel = document.getElementById('vocLevel');
+
+                        // Update Methane Level
+                        const methaneValue = data.explosion_parameters.Methane || 0;
+                        methaneLevel.textContent = methaneValue.toFixed(0) + ' ppm';
+                        methaneLevel.className = `badge ${methaneValue > 7500 ? 'bg-danger' : methaneValue > 5000 ? 'bg-warning' : 'bg-success'}`;
+
+                        // Update Hydrogen Level
+                        const hydrogenValue = data.explosion_parameters.Hydrogen || 0;
+                        hydrogenLevel.textContent = hydrogenValue.toFixed(0) + ' ppm';
+                        hydrogenLevel.className = `badge ${hydrogenValue > 6000 ? 'bg-danger' : hydrogenValue > 4000 ? 'bg-warning' : 'bg-success'}`;
+
+                        // Update VOC Level
+                        const vocValue = data.explosion_parameters.VOC || 0;
+                        vocLevel.textContent = vocValue.toFixed(0) + ' ppm';
+                        vocLevel.className = `badge ${vocValue > 150 ? 'bg-danger' : vocValue > 100 ? 'bg-warning' : 'bg-success'}`;
+                    }
+
+                    // Alerts Analysis
+                    const activeAlertsCount = document.getElementById('activeAlertsCount');
+                    if (data.alerts) {
+                        activeAlertsCount.textContent = data.alerts.length;
+                        activeAlertsCount.className = `badge ${data.alerts.length > 2 ? 'bg-warning' : data.alerts.length > 0 ? 'bg-warning' : 'bg-success'}`;
+                    }
+
+                    // Explosion Risks Analysis
+                    const criticalRisksCount = document.getElementById('criticalRisksCount');
+                    const highRisksCount = document.getElementById('highRisksCount');
+                    
+                    if (data.explosion_risks) {
+                        const criticalRisks = data.explosion_risks.filter(risk => risk.severity === 'CRITICAL').length;
+                        const highRisks = data.explosion_risks.filter(risk => risk.severity === 'HIGH').length;
+                        
+                        criticalRisksCount.textContent = criticalRisks;
+                        criticalRisksCount.className = `badge ${criticalRisks > 0 ? 'bg-danger' : 'bg-success'}`;
+                        
+                        highRisksCount.textContent = highRisks;
+                        highRisksCount.className = `badge ${highRisks > 0 ? 'bg-danger' : 'bg-success'}`;
                     }
                 })
                 .catch(error => {

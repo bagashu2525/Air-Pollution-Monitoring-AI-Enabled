@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 # ThingSpeak settings
-THINGSPEAK_API_KEY = "BTMPDKGZAB35W36H"
-THINGSPEAK_CHANNEL_ID = "2991188"
+THINGSPEAK_API_KEY = "2YU9I0E8CK6OE0CG"
+THINGSPEAK_CHANNEL_ID = "2990480"
 THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds.json"
 
 # Flask server settings
@@ -30,7 +30,12 @@ CONVERSION_FACTORS = {
     "MQ6": 0.0001,              # Convert to mg/m³
     "MQ2": 0.001,              # Convert to mg/m³
     "MQ4": 0.01,              # Convert to mg/m³
-    "MQ7": 0.01               # Convert to mg/m³
+    "MQ7": 0.01,
+     "methane" : 10.0,
+     "hydrogen" : 10.0,
+     "pressure" : 1.0,
+     "oxygen_level" : 1.0,
+     "voc" : 0.01
 }
 
 def convert_sensor_value(raw_value, sensor_type):
@@ -71,12 +76,12 @@ def fetch_thingspeak_data():
                         "Sulfates": convert_sensor_value(feed["field6"], "MQ4")               # MQ4
                     },
                     "explosion_parameters": {
-                        "Methane": convert_sensor_value(feed["field4"], "MQ6"),     # MQ6
-                        "Hydrogen": convert_sensor_value(feed["field3"], "MQ135"),  # MQ135
+                        "Methane": convert_sensor_value(feed["field4"] , "methane") ,     # MQ6
+                        "Hydrogen": convert_sensor_value(feed["field3"], "hydrogen"),  # MQ135
                         "Temperature": float(feed["field1"] or 0),                 # DHT22
                         "Pressure": 1.0,                                           # Default
                         "Oxygen_Level": 21.0,                                      # Default
-                        "VOC": convert_sensor_value(feed["field5"], "MQ2")         # MQ2
+                        "VOC": convert_sensor_value(feed["field5"], "voc")         # MQ2
                     },
                     "city": "New York"  # Default city
                 }

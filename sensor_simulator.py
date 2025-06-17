@@ -82,7 +82,7 @@ def main():
     print(f"Sending data to: {FLASK_SERVER}")
     
     try:
-        while True:
+    while True:
             # Generate new sensor data
             sensor_data = generate_sensor_data()
             
@@ -98,7 +98,7 @@ def main():
             
     except KeyboardInterrupt:
         print("\nSimulation stopped by user")
-    except Exception as e:
+        except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
