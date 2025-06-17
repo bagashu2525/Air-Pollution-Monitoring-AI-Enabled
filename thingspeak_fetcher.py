@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 # ThingSpeak settings
-THINGSPEAK_API_KEY = "2YU9I0E8CK6OE0CG"
-THINGSPEAK_CHANNEL_ID = "2990480"
+THINGSPEAK_API_KEY = "BTMPDKGZAB35W36H"
+THINGSPEAK_CHANNEL_ID = "2991188"
 THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds.json"
 
 # Flask server settings
