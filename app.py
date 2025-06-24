@@ -226,11 +226,67 @@ def receive_sensor_data():
 def get_thresholds():
     return jsonify(THRESHOLDS)
 
+# Keep the first function as is
 @app.route('/api/thresholds', methods=['POST'])
 def update_thresholds():
     new_thresholds = request.json
     THRESHOLDS.update(new_thresholds)
     return jsonify(THRESHOLDS)
 
+# Rename the second function
+@app.route('/api/admin/thresholds', methods=['POST'])
+def update_admin_thresholds():  # Changed function name here
+    # In a real app, you would save these to a database
+    thresholds = request.json
+    # Save thresholds to your database here
+    return jsonify({'success': True})
+
+@app.route('/api/admin/settings', methods=['GET'])
+def get_admin_settings():
+    # Return current thresholds and actions
+    return jsonify({
+        'thresholds': {
+            'CO': 9.0,
+            'NO2': 0.1,
+            'PM2.5': 35.0,
+            'PM10': 150.0,
+            'O3': 0.07,
+            'SO2': 0.075,
+            'Temperature': 35.0,
+            'Humidity': 80.0,
+            'Pressure': 1030.0,
+        },
+        'recommended_actions': [
+            {
+                'title': 'Evacuate Area',
+                'description': 'Clear all personnel from the affected zone immediately',
+                'priority': 'HIGH'
+            },
+            {
+                'title': 'Increase Ventilation',
+                'description': 'Activate emergency ventilation systems',
+                'priority': 'MEDIUM'
+            },
+            {
+                'title': 'Monitor Levels',
+                'description': 'Continue monitoring pollutant levels at 5-minute intervals',
+                'priority': 'LOW'
+            }
+        ]
+    })
+
+@app.route('/api/admin/actions', methods=['POST'])
+def update_actions():
+    data = request.json
+    action = data.get('action')
+    index = data.get('index')
+    # Save action to your database here
+    return jsonify({'success': True})
+
+@app.route('/api/admin/actions/<int:index>', methods=['DELETE'])
+def delete_action(index):
+    # Delete action from your database here
+    return jsonify({'success': True})
+
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000) 
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)

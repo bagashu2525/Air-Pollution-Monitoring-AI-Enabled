@@ -1,6 +1,13 @@
-# Industrial Pollution Monitoring and Prediction System
+# Pollution Monitoring System
 
-This project implements an IoT-based industrial pollution monitoring system with real-time alerts and AI-powered prediction capabilities.
+This project now includes:
+
+- **Java Spring Boot Backend**: Provides authentication and fetches pollution data from ThingSpeak (Channel ID: 2990480).
+- **Flutter Frontend**: Allows users/admins to log in and view pollution data via the backend.
+
+## Structure
+- `backend-java/` — Java Spring Boot backend
+- `lib/` — Flutter frontend (main Dart code)
 
 ## Features
 
