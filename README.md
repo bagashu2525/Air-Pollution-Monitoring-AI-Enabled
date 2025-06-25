@@ -2,12 +2,14 @@
 
 This project now includes:
 
-- **Java Spring Boot Backend**: Provides authentication and fetches pollution data from ThingSpeak (Channel ID: 2990480).
+- **Python Flask Backend**: Provides API endpoints and fetches pollution data from ThingSpeak (Channel ID: 2990480).
 - **Flutter Frontend**: Allows users/admins to log in and view pollution data via the backend.
 
 ## Structure
-- `backend-java/` — Java Spring Boot backend
-- `lib/` — Flutter frontend (main Dart code)
+- `application/` — Flutter frontend (main Dart code)
+- `templates/` — HTML templates for web interface
+- `static/` — Static assets for the web interface
+- `models/` — AI model files
 
 ## Features
 
@@ -86,4 +88,4 @@ The system will generate alerts when:
 2. Implement data visualization dashboard
 3. Add user authentication
 4. Implement mobile app notifications
-5. Add historical data analysis 
+5. Add historical data analysis
