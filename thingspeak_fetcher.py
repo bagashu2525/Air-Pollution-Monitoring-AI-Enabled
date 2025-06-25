@@ -35,7 +35,7 @@ CONVERSION_FACTORS = {
      "hydrogen" : 10.0,
      "pressure" : 1.0,
      "oxygen_level" : 1.0,
-     "voc" : 0.01
+     "LPG" : 0.01
 }
 
 def convert_sensor_value(raw_value, sensor_type):
@@ -76,12 +76,12 @@ def fetch_thingspeak_data():
                         "Sulfates": convert_sensor_value(feed["field6"], "MQ4")               # MQ4
                     },
                     "explosion_parameters": {
-                        "Methane": convert_sensor_value(feed["field4"] , "methane") ,     # MQ6
+                        "Methane": convert_sensor_value(feed["field6"] , "methane") ,     # MQ4
                         "Hydrogen": convert_sensor_value(feed["field3"], "hydrogen"),  # MQ135
                         "Temperature": float(feed["field1"] or 0),                 # DHT22
                         "Pressure": 1.0,                                           # Default
                         "Oxygen_Level": 21.0,                                      # Default
-                        "VOC": convert_sensor_value(feed["field5"], "voc")         # MQ2
+                        "LPG": convert_sensor_value(feed["field5"], "LPG")         # MQ2
                     },
                     "city": "New York"  # Default city
                 }
